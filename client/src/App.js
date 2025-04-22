@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Container, AppBar, Typography, Grow, Grid } from '@mui/material';
+import { Container } from '@mui/material';
 import { useDispatch } from 'react-redux';
+import { Routes, Route } from 'react-router-dom';
+
+import Navbar from './components/Navbar/Navbar';
+import Home from './components/Home/Home';
+import Auth from './components/Auth/Auth';
 
 import { getPosts } from './actions/posts';
-import Posts from './components/Posts/Posts';
-import Form from './components/Form/Form';
-import memories from './images/memories.png';
 
 const App = () => {
     const [currentId, setCurrentId] = useState(null);
@@ -17,46 +19,11 @@ const App = () => {
 
     return (
         <Container maxWidth="lg">
-            <AppBar
-                position="static"
-                color="inherit"
-                sx={{
-                    borderRadius: 2,
-                    m: '30px 0',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: '10px',
-                }}
-            >
-                <Typography
-                    variant="h2"
-                    align="center"
-                    sx={{ color: 'rgba(0,183,255,1)', flex: 1 }}
-                >
-                    Memories
-                </Typography>
-                <img src={memories} alt="memories" height="60" style={{ marginLeft: '15px' }} />
-            </AppBar>
-            <Grow in>
-                <Container>
-                    <Grid
-                        container
-                        direction={{ xs: 'column-reverse', sm: 'row' }}
-                        justifyContent="space-between"
-                        alignItems="stretch"
-                        spacing={3}
-                    >
-                        <Grid size={{ xs: 12, sm: 7 }}>
-                            <Posts setCurrentId={setCurrentId} />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <Form currentId={currentId} setCurrentId={setCurrentId} />
-                        </Grid>
-                    </Grid>
-                </Container>
-            </Grow>
+            <Navbar />
+            <Routes>
+                <Route path='/' element={<Home currentId={currentId} setCurrentId={setCurrentId} />} />
+                <Route path='/auth' element={<Auth />} />
+            </Routes>
         </Container>
     );
 };

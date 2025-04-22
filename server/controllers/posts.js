@@ -29,13 +29,17 @@ export const getPost = async (req, res) => {
 export const createPost = async (req, res) => {
     const post = req.body;
 
-    const newPost = new PostMessage(post);
+    console.log("Request body:", post); // Thêm log để kiểm tra
+    if (!post || Object.keys(post).length === 0) {
+        return res.status(400).json({ message: "Post data is empty" });
+    }
+    const newPost = new PostMessage({ ...post, creator: req.userId, createdAt: new Date().toISOString() });
 
     try {
         await newPost.save();
-
         res.status(201).json(newPost);
     } catch (error) {
+        console.log("Error saving post:", error); // Thêm log chi tiết lỗi
         res.status(401).json({ message: error.message })
     }
 }
@@ -67,7 +71,7 @@ export const deletePost = async (req, res) => {
 // LIKE
 export const likePost = async (req, res) => {
     const { id } = req.params;
-
+    
 
     if (!req.userId) {
         return res.json({ message: "Unauthenticated" });
@@ -76,6 +80,15 @@ export const likePost = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) return res.status(404).send(`No post with id: ${id}`);
 
     const post = await PostMessage.findById(id);
+
+    if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+    }
+
+
+    if (!post.likes) {
+        post.likes = [];
+    }
 
     const index = post.likes.findIndex((id) => id === String(req.userId));
 

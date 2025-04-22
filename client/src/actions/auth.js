@@ -1,26 +1,32 @@
 import * as actionTypes from '../constants/actionTypes';
 import * as api from '../api/index.js';
 
-export const signin = (formData, router) => async (dispatch) => {
+export const signin = (formData, navigate) => async (dispatch) => {
     try {
         const { data } = await api.signIn(formData);
 
-        dispatch({ type: actionTypes.AUTH, data });
+        if (!data || !data.token) {
+            throw new Error('Invalid server response - no token received');
+        }
 
-        router.push('/');
+        dispatch({ type: actionTypes.AUTH, data });
+        navigate('/');
     } catch (error) {
-        console.log(error);
+        console.error('Signin failed:', error.message);
     }
 };
 
-export const signup = (formData, router) => async (dispatch) => {
+export const signup = (formData, navigate) => async (dispatch) => {
     try {
         const { data } = await api.signUp(formData);
 
-        dispatch({ type: actionTypes.AUTH, data });
+        if (!data || !data.token) {
+            throw new Error('Invalid server response - no token received');
+        }
 
-        router.push('/');
+        dispatch({ type: actionTypes.AUTH, data });
+        navigate('/');
     } catch (error) {
-        console.log(error);
+        console.error('Signup failed:', error.message);
     }
 };
