@@ -1,7 +1,7 @@
 import axios from 'axios';
-
+// https://memoriesproject-production-e125.up.railway.app
 const API = axios.create({
-    baseURL: 'https://memoriesproject-production-e125.up.railway.app',
+    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
     headers: {
         'Content-Type': 'application/json'
     }
@@ -12,7 +12,7 @@ const getToken = () => {
         const profile = localStorage.getItem('profile');
         if (profile) {
             const parsedProfile = JSON.parse(profile);
-            return parsedProfile?.token;
+            return parsedProfile?.token || null;
         }
         return null;
     } catch (error) {
@@ -26,7 +26,6 @@ API.interceptors.request.use(
         const token = getToken();
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-            console.log('Token added to request:', config.headers.Authorization);
         } else {
             console.log('No token available');
         }
@@ -44,13 +43,16 @@ API.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem('profile');
+            alert('Your session has expired. Please log in again.');
             window.location.reload();
         }
         return Promise.reject(error);
     }
 );
 
-export const fetchPosts = () => API.get('/posts');
+export const fetchPost = (id) => API.get(`/posts/${id}`)
+export const fetchPosts = (page) => API.get(`/posts?page=${page}`);
+export const fetchPostsBySearch = (searchQuery) => API.get(`/posts/search?searchQuery=${searchQuery.search || 'none'}&tags=${searchQuery.tags}`);
 export const createPost = (newPost) => API.post('/posts', newPost);
 export const likePost = (id) => API.patch(`/posts/${id}/likePost`);
 export const updatePost = (id, updatedPost) => API.patch(`/posts/${id}`, updatedPost);

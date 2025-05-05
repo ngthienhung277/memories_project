@@ -1,19 +1,21 @@
 import * as actionType from '../constants/actionTypes';
 
 const authReducer = (state = { authData: null }, action) => {
+    console.log('AUTH reducer triggered with data:', action.data);
+
     switch (action.type) {
         case actionType.AUTH:
+
+            // Kiểm tra action.data có tồn tại và hợp lệ không
+            if (!action.data || !action.data.result || !action.data.token) {
+                console.error('Invalid auth data:', action.data);
+                return state; // Trả về state hiện tại nếu dữ liệu không hợp lệ
+            }
             // Đảm bảo format của dữ liệu auth
             const authData = {
                 result: action.data.result,
-                token: action.data.token
+                token: action.data.token,
             };
-
-            // Kiểm tra token trước khi lưu
-            if (!authData.token) {
-                console.error('No token in auth data');
-                return state;
-            }
 
             // Lưu vào localStorage
             try {
@@ -27,7 +29,12 @@ const authReducer = (state = { authData: null }, action) => {
             return { ...state, authData };
 
         case actionType.LOGOUT:
-            localStorage.removeItem('profile');
+            try {
+                localStorage.removeItem('profile');
+                console.log('Logged out, profile removed from localStorage');
+            } catch (error) {
+                console.error('Failed to clear localStorage:', error);
+            }
             return { ...state, authData: null };
 
         default:

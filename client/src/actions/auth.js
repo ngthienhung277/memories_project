@@ -8,7 +8,6 @@ export const signin = (formData, navigate) => async (dispatch) => {
         if (!data || !data.token) {
             throw new Error('Invalid server response - no token received');
         }
-
         dispatch({ type: actionTypes.AUTH, data });
         navigate('/');
     } catch (error) {

@@ -13,6 +13,7 @@ import axios from 'axios';
 const initialState = { firstName: '', lastName: '', email: '', password: '', confirmPassword: '' };
 
 const Auth = () => {
+
     const [form, setForm] = useState(initialState);
     const [isSignup, setIsSignup] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -71,16 +72,16 @@ const Auth = () => {
 
             // Gửi thông tin user đến server để xác thực
             const { data } = await axios.post('http://localhost:5000/user/google', { result });
-            console.log('Server auth response:', data);
+            console.log('Full response from server:', data);
 
             if (!data.token) {
                 throw new Error('No token received from server');
             }
 
-            // Lưu token riêng để dễ truy cập
-            localStorage.setItem('token', data.token);
+            console.log('Google server response:', data);
 
-            // Dispatch action với token từ server
+
+            // Dispatch action với token từ server 
             dispatch({
                 type: AUTH,
                 data: {
@@ -93,6 +94,7 @@ const Auth = () => {
                     token: data.token
                 }
             });
+            
 
             navigate('/');
         } catch (error) {
@@ -110,7 +112,7 @@ const Auth = () => {
         onSuccess: handleGoogleLoginSuccess,
         onError: (error) => {
             console.error('Google Sign In Error:', error);
-            alert('Google Sign In was unsuccessful. Try again later.');
+            console.log('Google Sign In was unsuccessful. Try again later.');
         },
         scope: 'profile email',
     });

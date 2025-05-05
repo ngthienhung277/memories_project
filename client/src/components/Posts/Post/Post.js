@@ -1,98 +1,192 @@
-import React, { useState } from 'react';
-import { CardContent, CardMedia, Button, Typography } from '@mui/material';
-import moment from 'moment';
+import React from 'react';
+import { Typography, Button, CardContent, Box } from '@mui/material';
+import { ThumbUp, ThumbUpAltOutlined, Delete, MoreHoriz } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
-import { deletePost, likePost } from '../../../actions/posts';
-import { MoreHoriz, ThumbUpAlt, Delete, ThumbUpAltOutlined } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import moment from 'moment';
+
+import { likePost, deletePost } from '../../../actions/posts';
 import {
     StyledCard,
+    StyledButtonBase,
+    StyledMedia,
     StyledOverlay,
     StyledOverlay2,
-    StyledDetails,
     StyledTitle,
-    StyledCardActions
+    StyledCardActions,
 } from './styles';
 
-const Post = ({ post, setCurrentId }) => {
-    const dispatch = useDispatch();
-    const user = JSON.parse(localStorage.getItem('profile'));
-    const [likes, setLikes] = useState(post?.likes);
-    // const navigate = useNavigate();
+const Likes = ({ likes, userId }) => {
+    console.log('Likes array:', likes, 'User ID:', userId);
+    const hasLikedPost = likes?.includes(userId);
+    console.log('Has liked post:', hasLikedPost);
 
-    const userId = user?.result?.googleId || user?.result?._id;
-    const hasLikedPost = likes?.find((like) => like === userId);
-
-    const handleLike = async () => {
-        dispatch(likePost(post._id));
-
-        if (hasLikedPost) {
-            setLikes(likes.filter((id) => id !== userId));
-        } else {
-            setLikes([...likes, userId]);
-        }
-    };
-
-    const Likes = () => {
-        if (likes?.length > 0) {
-            return likes.find((like) => like === userId)
-                ? (
-                    <>
-                        <ThumbUpAlt fontSize="small" />&nbsp;{likes.length > 2 ? `You and ${likes.length - 1} others` : `${likes.length} like${likes.length > 1 ? 's' : ''}`}
-                    </>
-                ) : (
-                    <>
-                        <ThumbUpAltOutlined fontSize="small" />&nbsp;{likes.length} {likes.length === 1 ? 'Like' : 'Likes'}
-                    </>
-                );
-        }
-
-        return <><ThumbUpAltOutlined fontSize="small" />&nbsp;Like</>;
-    };
-
-    if (!user?.result) {
-        return (
-            <Button size="small" color="primary" disabled>
-                <ThumbUpAltOutlined fontSize="small" />&nbsp;Like
-            </Button>
-        )
-    }
+    if (!likes?.length) return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ThumbUpAltOutlined fontSize="small" sx={{ color: 'text.secondary' }} />
+            Like
+        </Box>
+    );
 
     return (
-        <StyledCard>
-            <CardMedia component="img" image={post.selectedFile || 'https://user-images.githubusercontent.com/194400/49531010-48dad180-f8b1-11e8-8d89-1e61320e1d82.png'} title={post.title} />
-            <StyledOverlay>
-                <Typography variant="h6">{post.name}</Typography>
-                <Typography variant="body2">{moment(post.createdAt).fromNow()}</Typography>
-            </StyledOverlay>
-            {(user?.result?._id === post?.creator || user?.result?.googleId === post?.creator) && (
-                <StyledOverlay2>
-                    <Button
-                        style={{ color: 'white' }}
-                        size="small"
-                        onClick={() => setCurrentId(post._id)}
-                    >
-                        <MoreHoriz fontSize="default" />
-                    </Button>
-                </StyledOverlay2>
-            )}
-            <StyledDetails>
-                <Typography variant="body2" color="textSecondary">{post.tags.map((tag) => `#${tag} `)}</Typography>
-            </StyledDetails>
-            <StyledTitle variant="h5" gutterBottom>{post.title}</StyledTitle>
-            <CardContent>
-                <Typography variant="body2" color="textSecondary" component="p">{post.message}</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ThumbUp fontSize="small" sx={{ color: hasLikedPost ? '#1565c0' : 'text.secondary' }} />
+            {hasLikedPost
+                ? likes.length === 1
+                    ? 'YOU'
+                    : `YOU AND ${likes.length - 1} OTHER${likes.length - 1 !== 1 ? 'S' : ''}`
+                : `${likes.length} ${likes.length > 1 ? 'LIKES' : 'LIKE'}`}
+        </Box>
+    );
+};
+
+const Post = ({ post, setCurrentId }) => {
+    console.log('🔄 Post data:', post);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const user = JSON.parse(localStorage.getItem('profile'));
+    console.log('User from localStorage:', user);
+    const userId = user?.result?._id;
+    console.log('User ID:', userId, 'Post Creator:', post?.creator);
+    const isCreator = userId && post?.creator ? userId === post.creator : false;
+
+    const openPost = () => navigate(`/posts/${post._id}`);
+
+    return (
+        <StyledCard
+            elevation={6}
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                width: { xs: '90vw', sm: '300px', md: '300px' },
+                minWidth: '300px',
+                minHeight: '400px', // Đảm bảo chiều cao tối thiểu
+                margin: 'auto',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                transition: 'transform 0.3s ease',
+                '&:hover': {
+                    transform: 'scale(1.015)',
+                },
+            }}
+        >
+            <StyledButtonBase onClick={openPost} sx={{ flexGrow: 1, position: 'relative' }} component="div">
+                <StyledMedia
+                    image={post.selectedFile || 'https://via.placeholder.com/300'}
+                    title={post.title}
+                    sx={{ height: { xs: '150px', sm: '180px' }, objectFit: 'cover' }} // Điều chỉnh height theo responsive
+                />
+                <StyledOverlay sx={{ padding: '16px' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <Typography
+                            variant="h6"
+                            color="white"
+                            fontWeight={600}
+                            sx={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: '100%',
+                            }}
+                        >
+                            {post.name || 'Unknown'}
+                        </Typography>
+                        <Typography
+                            variant="body2"
+                            color="white"
+                            sx={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: '100%',
+                            }}
+                        >
+                            {moment(post.createdAt).fromNow()}
+                        </Typography>
+                    </Box>
+                </StyledOverlay>
+
+                {isCreator && (
+                    <StyledOverlay2>
+                        <Button
+                            sx={{ color: 'white', minWidth: 'unset' }}
+                            size="small"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentId(post._id);
+                            }}
+                        >
+                            <MoreHoriz fontSize="default" />
+                        </Button>
+                    </StyledOverlay2>
+                )}
+            </StyledButtonBase>
+
+            <CardContent sx={{ padding: '16px', flexGrow: 1, minHeight: '180px' }}>
+                <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    gutterBottom
+                    sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '100%',
+                    }}
+                >
+                    {post.tags.map((tag) => `#${tag} `)}
+                </Typography>
+
+                <StyledTitle
+                    variant="h6"
+                    gutterBottom
+                    sx={{
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '100%',
+                    }}
+                >
+                    {post.title}
+                </StyledTitle>
+
+                <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    sx={{
+                        display: '-webkit-box',
+                        WebkitBoxOrient: 'vertical',
+                        WebkitLineClamp: 3, // Giới hạn 3 dòng như trong hình
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '100%',
+                    }}
+                >
+                    {post.message}
+                </Typography>
             </CardContent>
-            <StyledCardActions>
+
+            <StyledCardActions sx={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between' }}>
                 <Button
                     size="small"
                     color="primary"
-                    onClick={handleLike}
+                    disabled={!user?.result}
+                    onClick={() => dispatch(likePost(post._id))}
                 >
-                    <Likes />
+                    <Likes likes={post.likes} userId={userId} />
                 </Button>
-                {(user?.result?._id === post?.creator || user?.result?.googleId === post?.creator) && (
-                    <Button size="small" color="error" onClick={() => dispatch(deletePost(post._id))}>
-                        <Delete fontSize="small" /> Delete
+
+                {isCreator && (
+                    <Button
+                        size="small"
+                        color="secondary"
+                        onClick={() => dispatch(deletePost(post._id))}
+                    >
+                        <Delete fontSize="small" />
+                        Delete
                     </Button>
                 )}
             </StyledCardActions>

@@ -1,8 +1,7 @@
-import { styled } from '@mui/system';
-import { deepPurple } from '@mui/material/colors';
+import { AppBar, Typography, Toolbar } from '@mui/material';
+import { styled } from '@mui/material/styles';
 
-// Styled components for MUI v5
-export const AppBarStyled = styled('div')(({ theme }) => ({
+export const AppBarStyled = styled(AppBar)(({ theme }) => ({
     borderRadius: 15,
     margin: '30px 0',
     display: 'flex',
@@ -10,41 +9,47 @@ export const AppBarStyled = styled('div')(({ theme }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '10px 50px',
+    [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+    },
 }));
 
-export const HeadingStyled = styled('a')({
-    color: 'rgba(0,183,255, 1)',
-    textDecoration: 'none',
-});
-
-export const ImageStyled = styled('img')({
-    marginLeft: '15px',
-});
-
-export const ToolbarStyled = styled('div')({
+export const BrandContainerStyled = styled('div')(({ theme }) => ({
     display: 'flex',
-    justifyContent: 'flex-end',
-    width: '400px',
-});
+    alignItems: 'center',
+    textDecoration: 'none',
+}));
 
-export const ProfileStyled = styled('div')({
+export const HeadingStyled = styled(Typography)(({ theme }) => ({
+    color: theme.palette.primary.main,
+    textDecoration: 'none',
+    fontSize: '2em',
+    fontWeight: 300,
+}));
+
+export const ImageStyled = styled('img')(({ theme }) => ({
+    marginLeft: '10px',
+    marginRight: '15px',
+    height: '60px',
+}));
+
+export const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
+    display: 'flex',
+    justifyContent: 'space-between',
+    width: '100%',
+    margin: '0 auto',
+}));
+
+export const ProfileStyled = styled('div')(({ theme }) => ({
     display: 'flex',
     justifyContent: 'space-between',
     width: '400px',
-});
-
-export const UserNameStyled = styled('div')({
-    display: 'flex',
     alignItems: 'center',
-});
+    [theme.breakpoints.down('sm')]: {
+        width: 'auto',
+        marginTop: 20,
+        justifyContent: 'center',
+    },
+}));
 
-export const BrandContainerStyled = styled('div')({
-    display: 'flex',
-    alignItems: 'center',
-});
-
-export const PurpleStyled = styled('div')({
-    color: '#fff',
-    backgroundColor: deepPurple[500],
-});
-
+// Replacing `makeStyles` with `sx` prop for inline styling

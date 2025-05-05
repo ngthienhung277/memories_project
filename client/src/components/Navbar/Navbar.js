@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, AppBar, Typography, Avatar, Button } from '@mui/material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { jwtDecode } from 'jwt-decode';
 
-import memories from '../../images/memories.png';
+import memoriesLogo from '../../images/memories-Logo.png';
+import memoriesText from '../../images/memories-Text.png';
 import * as actionType from '../../constants/actionTypes';
-import { BrandContainerStyled, ToolbarStyled, HeadingStyled, ImageStyled, ProfileStyled } from './styles';
 import { deepPurple } from '@mui/material/colors';
 
 const Navbar = () => {
@@ -15,126 +15,118 @@ const Navbar = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(JSON.parse(localStorage.getItem('profile')));
 
+    console.log('Navbar loaded user:', localStorage.getItem('profile'));
+
     const logout = useCallback(() => {
         dispatch({ type: actionType.LOGOUT });
+        localStorage.clear();
         navigate('/auth');
         setUser(null);
     }, [dispatch, navigate]);
 
-    useEffect(() => {
-        const token = user?.token;
-
-        if (token) {
-            try {
-                const decodedToken = jwtDecode(token);
-                console.log('decodedToken', decodedToken);
-
-                if (decodedToken.exp * 1000 < new Date().getTime()) {
-                    logout();
-                }
-            } catch (error) {
-                console.error("Invalid token:", error);
-                logout();
-            }
+    const decodedToken = useMemo(() => {
+        try {
+            const token = user?.token;
+            return token ? jwtDecode(token) : null;
+        } catch (error) {
+            console.error("Invalid token:", error);
+            return null;
         }
-    }, [logout, user]);
+    }, [user?.token]);
+
+    useEffect(() => {
+        if (decodedToken && decodedToken.exp * 1000 < new Date().getTime()) {
+            logout();
+        }
+    }, [decodedToken, logout]);
 
     useEffect(() => {
         setUser(JSON.parse(localStorage.getItem('profile')));
     }, [location]);
 
-    const displayName = user?.result?.firstName && user?.result?.lastName
-        ? `${user.result.firstName} ${user.result.lastName}`
-        : user?.result?.name || 'User';
-
+    const displayName = useMemo(() => {
+        return user?.result?.firstName && user?.result?.lastName
+            ? `${user.result.firstName} ${user.result.lastName}`
+            : user?.result?.name || 'User';
+    }, [user]);
+    console.log('user.result', user?.result.imageUrl)
     return (
         <AppBar position="static" color="inherit"
             sx={{
                 borderRadius: 2,
-                margin: '30px 0',
-                padding: '10px 30px',
+                m: '30px 0',
+                p: '10px 30px',
                 display: 'flex',
+                alignItems: 'center',
                 flexDirection: 'row',
                 justifyContent: 'space-between',
-                alignItems: 'center',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             }}>
-            <BrandContainerStyled>
-                <HeadingStyled
-                    variant="h2"
-                    align="center"
-                    style={{ color: '#333', fontWeight: 'bold', fontFamily: 'Roboto, sans-serif', textDecoration: 'none' }}
-                    as={Link}
-                    to="/"
-                >
-                    Memories
-                </HeadingStyled>
-                <ImageStyled src={memories} alt="icon" height="60" sx={{ marginLeft: '15px' }} />
-            </BrandContainerStyled>
+            <Link to="/" >
+                <img src={memoriesText} alt="icon" height="45px" style={{ marginRight: '16px' }} />
+                <img src={memoriesLogo} alt="icon" height="40px" />
+            </Link>
 
-            <ToolbarStyled>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 {user?.result ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '2' }}>
-                        <ProfileStyled>
-                            <Avatar
-                                sx={{
-                                    backgroundColor: deepPurple[500],
-                                    marginRight: '10px',
-                                    width: 40,
-                                    height: 40
-                                }}
-                                alt={displayName}
-                                src={user?.result.imageUrl}
-                                onError={(e) => {
-                                    console.log('Avatar load error for user:', user?.result);
-                                    e.target.onerror = null;
-                                    e.target.src = '';
-                                }}
-                            >
-                                {displayName.charAt(0)}
-                            </Avatar>
-                            <Typography
-                                sx={{
-                                    fontWeight: '500',
-                                    marginRight: '10px',
-                                    display: 'flex',
-                                    alignItems: 'center'
-                                }}
-                                variant="h6"
-                                component="span"
-                            >
-                                {displayName}
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                color="error"
-                                sx={{
-                                    backgroundColor: '#f44336',
-                                    '&:hover': { backgroundColor: '#d32f2f' },
-                                    borderRadius: '8px',
-                                    textTransform: 'none',
-                                    padding: '6px 16px'
-                                }}
-                                onClick={logout}
-                            >
-                                Logout
-                            </Button>
-                        </ProfileStyled>
-                    </Box>
+                    <>
+                        <Avatar
+                            sx={{
+                                backgroundColor: deepPurple[500],
+                                mr: 2,
+                                width: 40,
+                                height: 40
+                            }}
+                            alt={displayName}
+                            src={user?.result.imageUrl}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '';
+                            }}
+                        >
+                            {user?.result?.imageUrl || displayName.charAt(0)}
+                        </Avatar>
+                        <Typography
+                            variant="h6"
+                            sx={{
+                                fontWeight: 500,
+                                mr: 2
+                            }}
+                        >
+                            {displayName}
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={logout}
+                            sx={{
+                                backgroundColor: '#f44336',
+                                '&:hover': { backgroundColor: '#d32f2f' },
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                p: 2
+                            }}
+                        >
+                            Logout
+                        </Button>
+                    </>
                 ) : (
                     <Button
+                        variant="contained"
                         component={Link}
                         to="/auth"
-                        variant="contained"
                         sx={{
                             backgroundColor: '#1976d2',
                             '&:hover': { backgroundColor: '#1565c0' },
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            padding: 2
                         }}
                     >
                         Sign In
                     </Button>
                 )}
-            </ToolbarStyled>
+            </Box>
         </AppBar>
     );
 };
