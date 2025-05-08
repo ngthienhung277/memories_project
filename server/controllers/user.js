@@ -190,7 +190,9 @@ export const getUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-
+        if (user.imageUrl && user.imageUrl.startsWith('/server/uploads')) {
+            user.imageUrl = 'http://localhost:5000/uploads/memories.png';
+        }
         // Không trả về password trong response
         const userWithoutPassword = {
             _id: user._id,

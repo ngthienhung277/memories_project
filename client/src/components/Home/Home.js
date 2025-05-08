@@ -22,7 +22,7 @@ const Home = ({ currentId, setCurrentId }) => {
     const searchQuery = query.get('searchQuery')
 
     useEffect(() => {
-        dispatch(getPosts());
+        dispatch(getPosts(1));
     }, [dispatch]);
 
     const [search, setSearch] = useState('');
@@ -40,17 +40,13 @@ const Home = ({ currentId, setCurrentId }) => {
     const searchPost = () => {
         if (search.trim() || tags) {
             dispatch(getPostsBySearch({ search, tags: tags.join(',') }));
-            navigate(`/posts/search?searchQuery=${search || 'none'}&tags=${tags.join(',')}`)
+            navigate(`/posts/search?searchQuery=${search || 'none'}&tags=${tags.join(',') || 'none'}`)
             console.log("Searching for:", { search, tags });
 
         } else {
             navigate('/');
         }
     }
-
-    const handleAddChip = (tag) => setTags([...tags, tag]);
-
-    const handleDeleteChip = (chipToDelete) => setTags(tags.filter((tag) => tag !== chipToDelete));
 
     return (
         <Grow in>

@@ -1,15 +1,21 @@
 import mongoose from 'mongoose';
 import PostMessage from '../models/postMessage.js';
+import express from 'express';
+
+const router = express.Router();
 
 // GET ALL
 export const getPosts = async (req, res) => {
     const { page } = req.query;
+    const currentPage = parseInt(page) || 1; // Mặc định là trang 1 nếu page không hợp lệ
     try {
         const LIMIT = 8;
-        const startIndex = (Number(page) - 1) * LIMIT;
+        const startIndex = (Number(currentPage) - 1) * LIMIT;
         const total = await PostMessage.countDocuments({});
 
-        const posts = await PostMessage.find().sort({ _id: -1 }).limit(LIMIT).skip(startIndex);
+        const posts = await PostMessage.find().sort({ _id: -1 })
+            .limit(LIMIT)
+            .skip(startIndex);
         console.log("📦 Fetched posts:", posts);
 
         res.status(200).json({
@@ -41,14 +47,18 @@ export const getPostsBySearch = async (req, res) => {
 // GET ONE
 export const getPost = async (req, res) => {
     const { id } = req.params;
-
     try {
-        const post = await PostMessage.findById(id);
-        if (!post) return res.status(404).json({ message: 'Post not found' });
-
+        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ message: 'Invalid post ID' });
+        }
+        const post = await Post.findById(id);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
         res.status(200).json(post);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error in getPost:', error.message);
+        res.status(500).json({ message: 'Server error' });
     }
 };
 
@@ -145,3 +155,22 @@ export const likePost = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
+
+export const commentPost = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { value } = req.body;
+
+        const post = await PostMessage.findById(id);
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+
+        post.comments.push(value);
+        const updatedPost = await post.save();
+
+        res.status(200).json(updatedPost)
+    } catch (error) {
+        res.status(404).json({ message: 'Error adding comment', error: error.message })
+    }
+}
+
+export default router;

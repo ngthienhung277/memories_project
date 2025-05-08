@@ -24,7 +24,7 @@ const Likes = ({ likes, userId }) => {
     if (!likes?.length) return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ThumbUpAltOutlined fontSize="small" sx={{ color: 'text.secondary' }} />
-            Like
+            0 Like
         </Box>
     );
 
@@ -50,7 +50,28 @@ const Post = ({ post, setCurrentId }) => {
     console.log('User ID:', userId, 'Post Creator:', post?.creator);
     const isCreator = userId && post?.creator ? userId === post.creator : false;
 
-    const openPost = () => navigate(`/posts/${post._id}`);
+    const openPost = (e) => {
+        e.preventDefault(); // Ngăn hành vi mặc định (refresh)
+        e.stopPropagation(); // ngan su kien lan truyen
+        if (post?._id) {
+            console.log('Navigating to:', `/posts/${post._id}`);
+            navigate(`/posts/${post._id}`, { replace: false });
+        } else {
+            console.log('Post ID is undefined', post)
+        }
+    }
+
+
+    if (!post || !post._id) {
+        console.warn('Invalid post data:', post);
+        return (
+            <StyledCard elevation={6} sx={{ padding: '16px', textAlign: 'center' }}>
+                <Typography variant="body2" color="error">
+                    Error: Post data is invalid or missing.
+                </Typography>
+            </StyledCard>
+        );
+    }
 
     return (
         <StyledCard

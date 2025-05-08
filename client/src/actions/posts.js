@@ -1,4 +1,4 @@
-import { FETCH_ALL, CREATE, UPDATE, DELETE, LIKE, START_LOADING, FETCH_POST, FETCH_BY_SEARCH, END_LOADING } from '../constants/actionTypes';
+import { FETCH_ALL, CREATE, UPDATE, DELETE, LIKE, START_LOADING, FETCH_POST, FETCH_BY_SEARCH, END_LOADING, COMMENT } from '../constants/actionTypes';
 
 import * as api from '../api/index.js';
 
@@ -6,14 +6,20 @@ import * as api from '../api/index.js';
 export const getPost = (id) => async (dispatch) => {
     console.log('🚀 useEffect gọi getPost với id:', id);
     try {
-        dispatch({ type: START_LOADING });
+        dispatch({ type: 'START_LOADING' });
         const { data } = await api.fetchPost(id);
-
-        console.log('API fetchPost:', data);
-        dispatch({ type: FETCH_POST, payload: data });
+        if (!data) {
+            console.warn('No data returned for id:', id);
+            dispatch({ type: 'FETCH_POST', payload: null });
+        } else {
+            console.log('Fetched post:', data);
+            dispatch({ type: 'FETCH_POST', payload: data });
+        }
     } catch (error) {
-        console.error("🔥 getPost error:", error.response?.data || error.message);
-        dispatch({ type: END_LOADING });
+        console.error('Error fetching post:', error.message);
+        dispatch({ type: 'FETCH_POST', payload: null }); // Đặt payload là null khi có lỗi
+    } finally {
+        dispatch({ type: 'END_LOADING' });
     }
 };
 
@@ -23,9 +29,10 @@ export const getPosts = (page) => async (dispatch) => {
         const { data } = await api.fetchPosts(page);
         console.log("API getPosts:", data);
         dispatch({ type: FETCH_ALL, payload: data });
-        dispatch({ type: END_LOADING });
     } catch (error) {
         console.error('Error fetching posts:', error);
+        dispatch({ type: 'FETCH_ALL', payload: { data: [], currentPage: null, numberOfPages: null } });
+    } finally {
         dispatch({ type: END_LOADING });
     }
 };
@@ -71,9 +78,20 @@ export const likePost = (id) => async (dispatch) => {
     try {
         const { data } = await api.likePost(id);// Call API
         console.log('Liked post response:', data); // 👈 kiểm tra xem likes trả về có đúng không
-        dispatch({ type: UPDATE, payload: data }); // Send to reducer
+        dispatch({ type: LIKE, payload: data }); // Send to reducer
     } catch (error) {
         console.error('Error liking post:', error);
+    }
+};
+
+export const commentPost = (value, id) => async (dispatch) => {
+    try {
+        const { data } = await api.commentPost(value, id);// Call API
+        dispatch({ type: COMMENT, payload: data }); // Send to reducer
+
+        return data.comments;
+    } catch (error) {
+        console.error('Error commenting post:', error);
     }
 };
 

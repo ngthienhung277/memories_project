@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Avatar, Button, Paper, Grid, Typography, Container, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -9,43 +9,58 @@ import { signin, signup } from '../../actions/auth';
 import { AUTH } from '../../constants/actionTypes';
 import Input from './Input';
 import axios from 'axios';
+import { getPosts } from '../../actions/posts.js';
 
 const initialState = { firstName: '', lastName: '', email: '', password: '', confirmPassword: '' };
 
 const Auth = () => {
-
-    const [form, setForm] = useState(initialState);
     const [isSignup, setIsSignup] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+    const [form, setForm] = useState(initialState);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Toggle password visibility
+    useEffect(() => {
+        const fetchPosts = async () => {
+            if (localStorage.getItem('profile')) {
+                console.log('Fetching posts on mount...');
+                await dispatch(getPosts(1));
+            }
+        };
+        fetchPosts();
+    }, [dispatch]);
+
     const handleShowPassword = () => setShowPassword(prev => !prev);
 
-    // Switch between sign up and sign in
     const switchMode = () => {
         setForm(initialState);
         setIsSignup(prev => !prev);
         setShowPassword(false);
     };
 
-    // Handle form input change
     const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-    // Handle form submission (sign in or sign up)
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isSignup) {
-            dispatch(signup(form, navigate));
-        } else {
-            dispatch(signin(form, navigate));
+        try {
+            let result;
+            if (isSignup) {
+                result = await dispatch(signup(form, navigate));
+            } else {
+                result = await dispatch(signin(form, navigate));
+            }
+            if (result?.payload) {
+                console.log('Fetching posts after form login...');
+                await dispatch(getPosts(1));
+                navigate('/');
+            }
+        } catch (error) {
+            console.error('Login/Signup Error:', error);
         }
     };
 
-    // Handle Google login success
     const handleGoogleLoginSuccess = async (tokenResponse) => {
         try {
             setIsGoogleLoading(true);
@@ -64,13 +79,12 @@ const Auth = () => {
                 name: userInfoResponse.data.name,
                 firstName: userInfoResponse.data.given_name,
                 lastName: userInfoResponse.data.family_name,
-                imageUrl: userInfoResponse.data.picture,
-                sub: userInfoResponse.data.sub
+                imageUrl: userInfoResponse.data.picture || 'http://localhost:5000/uploads/default-avatar.png',
+                sub: userInfoResponse.data.sub,
             };
 
             console.log('Sending to server:', result);
 
-            // Gửi thông tin user đến server để xác thực
             const { data } = await axios.post('http://localhost:5000/user/google', { result });
             console.log('Full response from server:', data);
 
@@ -78,36 +92,32 @@ const Auth = () => {
                 throw new Error('No token received from server');
             }
 
-            console.log('Google server response:', data);
+            const userData = {
+                result: {
+                    ...data.result,
+                    imageUrl: result.imageUrl.startsWith('http') ? result.imageUrl : `http://localhost:5000${result.imageUrl}`,
+                    firstName: result.firstName,
+                    lastName: result.lastName,
+                },
+                token: data.token,
+            };
 
+            dispatch({ type: AUTH, data: userData });
+            localStorage.setItem('profile', JSON.stringify(userData)); // Lưu thủ công
 
-            // Dispatch action với token từ server 
-            dispatch({
-                type: AUTH,
-                data: {
-                    result: {
-                        ...data.result,
-                        imageUrl: result.imageUrl, // Đảm bảo imageUrl từ Google được lưu
-                        firstName: result.firstName,
-                        lastName: result.lastName
-                    },
-                    token: data.token
-                }
-            });
-            
-
+            console.log('Fetching posts after Google login...');
+            await dispatch(getPosts(1));
             navigate('/');
         } catch (error) {
-            console.error("Google Login Error:", error);
+            console.error('Google Login Error:', error);
             if (error.response) {
-                console.error("Server Error:", error.response.data);
+                console.error('Server Error:', error.response.data);
             }
         } finally {
             setIsGoogleLoading(false);
         }
     };
 
-    // Google login hook
     const login = useGoogleLogin({
         onSuccess: handleGoogleLoginSuccess,
         onError: (error) => {

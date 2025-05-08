@@ -2,19 +2,21 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+const path = require('path');
 
 import postRoutes from './routes/posts.js';
 import userRoutes from './routes/user.js';
 import authRoutes from './routes/auth.js';
 
-const app = express();
 dotenv.config();
+
+const app = express();
 
 // Middleware
 app.use(express.json({ limit: '30mb', extended: true }));
 app.use(express.urlencoded({ limit: '30mb', extended: true }));
 app.use(cors());
-
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Logging middleware
 app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`);

@@ -7,13 +7,18 @@ import Post from './Post/Post';
 import { PostsContainer } from './styles';
 
 const Posts = ({ setCurrentId }) => {
-    const { posts, isLoading } = useSelector((state) => state.posts);
     const dispatch = useDispatch();
+    const { posts, isLoading } = useSelector((state) => state.posts);
 
     useEffect(() => {
+        console.log('Fetching posts in Posts...');
         dispatch(getPosts(1));
     }, [dispatch]);
 
+    useEffect(() => {
+        console.log('Posts in Home:', posts); // Log để kiểm tra
+    }, [posts]);
+    
     if (isLoading) {
         return <CircularProgress />;
     }

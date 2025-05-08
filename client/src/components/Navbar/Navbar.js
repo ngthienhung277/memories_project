@@ -11,8 +11,8 @@ import { deepPurple } from '@mui/material/colors';
 
 const Navbar = () => {
     const dispatch = useDispatch();
-    const location = useLocation();
     const navigate = useNavigate();
+    const location = useLocation();
     const [user, setUser] = useState(JSON.parse(localStorage.getItem('profile')));
 
     console.log('Navbar loaded user:', localStorage.getItem('profile'));
@@ -20,16 +20,32 @@ const Navbar = () => {
     const logout = useCallback(() => {
         dispatch({ type: actionType.LOGOUT });
         localStorage.clear();
-        navigate('/auth');
+        dispatch({ type: 'CLEAR_POSTS' });
+        localStorage.removeItem('profile');
+        navigate('/auth', { replace: true }); // Điều hướng về trang đăng nhập      
         setUser(null);
     }, [dispatch, navigate]);
+
+    const getAvatarSrc = () => {
+        if (!user || !user.result || !user.result.imageUrl || user.result.imageUrl === '') {
+            console.warn('No valid imageUrl, using default:', user?.result?.imageUrl);
+            return 'http://localhost:5000/uploads/default-avatar.png'; // Hình ảnh mặc định
+        }
+        let imageUrl = user.result.imageUrl;
+        if (!imageUrl.includes('http')) {
+            console.warn('Invalid imageUrl, prepending base URL:', imageUrl);
+            imageUrl = `http://localhost:5000${imageUrl}`; // Thêm base URL nếu cần
+        }
+        console.log('Computed avatar src:', imageUrl);
+        return imageUrl;
+    };
 
     const decodedToken = useMemo(() => {
         try {
             const token = user?.token;
             return token ? jwtDecode(token) : null;
         } catch (error) {
-            console.error("Invalid token:", error);
+            console.error('Invalid token:', error);
             return null;
         }
     }, [user?.token]);
@@ -41,7 +57,9 @@ const Navbar = () => {
     }, [decodedToken, logout]);
 
     useEffect(() => {
-        setUser(JSON.parse(localStorage.getItem('profile')));
+        const profile = JSON.parse(localStorage.getItem('profile'));
+        console.log('Updated user from localStorage:', profile);
+        setUser(profile);
     }, [location]);
 
     const displayName = useMemo(() => {
@@ -49,9 +67,11 @@ const Navbar = () => {
             ? `${user.result.firstName} ${user.result.lastName}`
             : user?.result?.name || 'User';
     }, [user]);
-    console.log('user.result', user?.result.imageUrl)
+
     return (
-        <AppBar position="static" color="inherit"
+        <AppBar
+            position="static"
+            color="inherit"
             sx={{
                 borderRadius: 2,
                 m: '30px 0',
@@ -61,8 +81,9 @@ const Navbar = () => {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            }}>
-            <Link to="/" >
+            }}
+        >
+            <Link to="/">
                 <img src={memoriesText} alt="icon" height="45px" style={{ marginRight: '16px' }} />
                 <img src={memoriesLogo} alt="icon" height="40px" />
             </Link>
@@ -75,24 +96,19 @@ const Navbar = () => {
                                 backgroundColor: deepPurple[500],
                                 mr: 2,
                                 width: 40,
-                                height: 40
+                                height: 40,
                             }}
                             alt={displayName}
-                            src={user?.result.imageUrl}
+                            src={getAvatarSrc()}
                             onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = '';
+                                e.target.onerror = null; // Ngăn lặp vô hạn
+                                console.error('Avatar image failed to load:', e.target.src);
+                                e.target.src = 'http://localhost:5000/uploads/memories.png'; // Fallback
                             }}
                         >
-                            {user?.result?.imageUrl || displayName.charAt(0)}
+                            {displayName.charAt(0)}
                         </Avatar>
-                        <Typography
-                            variant="h6"
-                            sx={{
-                                fontWeight: 500,
-                                mr: 2
-                            }}
-                        >
+                        <Typography variant="h6" sx={{ fontWeight: 500, mr: 2 }}>
                             {displayName}
                         </Typography>
                         <Button
@@ -104,7 +120,7 @@ const Navbar = () => {
                                 '&:hover': { backgroundColor: '#d32f2f' },
                                 borderRadius: 2,
                                 textTransform: 'none',
-                                p: 2
+                                padding: '8px 16px',
                             }}
                         >
                             Logout
@@ -120,8 +136,9 @@ const Navbar = () => {
                             '&:hover': { backgroundColor: '#1565c0' },
                             borderRadius: 2,
                             textTransform: 'none',
-                            padding: 2
+                            padding: '8px 16px',
                         }}
+                        onClick={() => navigate('/auth')}
                     >
                         Sign In
                     </Button>
@@ -131,4 +148,4 @@ const Navbar = () => {
     );
 };
 
-export default Navbar; 
+export default Navbar;
